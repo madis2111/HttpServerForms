@@ -1,8 +1,7 @@
 import java.io.BufferedOutputStream;
 
 @FunctionalInterface
-public interface Handler {      // обработчик (запроса request)
-
+public interface Handler {
     void handle(Request request, BufferedOutputStream bufferedOutputStream);
 
 }

@@ -1,14 +1,21 @@
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
+
+
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 
+
 public class Main {
     public static void main(String[] args) {
 
+
         final Server server = new Server();
         server.addHandler("GET", "/classic.html", new Handler() {
-            public void handle(Request request, BufferedOutputStream responseStream) {
+              public void handle(Request request, BufferedOutputStream responseStream) {
                 final Path filePath = Path.of(".", "public", "/classic.html");
 
                 try {
@@ -30,11 +37,20 @@ public class Main {
             }
         });
 
-        server.addHandler("POST", "/events.html", new Handler() {
+
+        server.addHandler("GET", "/messages", new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) {
+
+
                 try {
                     String textPath = request.getHead();
-                    Path pathObject = Path.of(".public" + textPath);
+
+
+                    NameValuePair nameValue = new URIBuilder(textPath).getFirstQueryParam("page");
+                    String value = nameValue.getValue();
+
+                    Path pathObject = Path.of(".public/" + value);
+
 
                     final String mimeType = Files.probeContentType(pathObject);
 
@@ -42,7 +58,7 @@ public class Main {
                     responseStream.write(("HTTP/1.1 200 OK\r\n" + "Content-Type: " + mimeType + "\r\n" + "Content-Length: " + length + "\r\n" + "Connection: close\r\n" + "\r\n").getBytes());
                     Files.copy(pathObject, responseStream);
                     responseStream.flush();
-                } catch (IOException e) {
+                } catch (IOException | URISyntaxException e) {
                     e.printStackTrace();
                 }
             }

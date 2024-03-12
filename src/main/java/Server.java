@@ -1,10 +1,13 @@
+import org.apache.hc.core5.net.URIBuilder;
+
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -16,8 +19,6 @@ public class Server {
     private ExecutorService pool;
 
     private Map<String, Map<String, Handler>> handlersMap;
-
-    private final List<String> validPaths = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html", "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
 
     public Server() {
         pool = Executors.newFixedThreadPool(64);
@@ -49,30 +50,28 @@ public class Server {
     public void submitClient(Socket socket) {
 
         pool.submit(() -> {
-            try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());) {
+            try (final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream())) {
                 final String requestLine = in.readLine();
-                final String[] parts = requestLine.split(" ");     // massiv iz trekh yacheek
+                final String[] parts = requestLine.split(" ");
                 String type = parts[0];
                 String path = parts[1];
+
+                String pathWithoutParams = new URIBuilder(path).getPath();
 
                 if (parts.length != 3) {
                     return;
                 }
 
-                if (!validPaths.contains(path)) {
+                Request request = new Request(type, path, socket.getInputStream());
+                Handler handler = handlersMap.get(type).get(pathWithoutParams);
+                if (handler == null) {
                     out.write(("HTTP/1.1 404 Not Found\r\n" + "Content-Length: 0\r\n" + "Connection: close\r\n" + "\r\n").getBytes());
                     out.flush();
                 }
-
-                Request request = new Request(type, path, socket.getInputStream());
-                Handler handler = handlersMap.get(type).get(path);
-                if (handler == null) {
-
-                }
                 handler.handle(request, out);
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (IOException | URISyntaxException e) {
+                e.printStackTrace();
             }
         });
     }
