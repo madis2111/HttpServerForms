@@ -1,9 +1,4 @@
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.net.URIBuilder;
-
-
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -43,14 +38,9 @@ public class Main {
 
 
                 try {
-                    String textPath = request.getHead();
-
-
-                    NameValuePair nameValue = new URIBuilder(textPath).getFirstQueryParam("page");
-                    String value = nameValue.getValue();
+                    String value = request.getQueryParam("page");
 
                     Path pathObject = Path.of(".public/" + value);
-
 
                     final String mimeType = Files.probeContentType(pathObject);
 
@@ -58,12 +48,11 @@ public class Main {
                     responseStream.write(("HTTP/1.1 200 OK\r\n" + "Content-Type: " + mimeType + "\r\n" + "Content-Length: " + length + "\r\n" + "Connection: close\r\n" + "\r\n").getBytes());
                     Files.copy(pathObject, responseStream);
                     responseStream.flush();
-                } catch (IOException | URISyntaxException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-
         server.listen(9999);
     }
 }

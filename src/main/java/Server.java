@@ -1,6 +1,5 @@
 import org.apache.hc.core5.net.URIBuilder;
 
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,7 +56,6 @@ public class Server {
                 String path = parts[1];
 
                 String pathWithoutParams = new URIBuilder(path).getPath();
-
                 if (parts.length != 3) {
                     return;
                 }
